@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Link4m Key Generator</title>
+    <!-- Tích hợp Tailwind CSS để giao diện đẹp hơn -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white flex items-center justify-center min-h-screen">
+
+    <div class="w-full max-w-md bg-gray-800 p-8 rounded-lg shadow-2xl">
+        <h1 class="text-3xl font-bold text-center mb-2">Công cụ tạo link Link4m</h1>
+        <p class="text-center text-gray-400 mb-6">Nhập thông tin API và URL để tạo link rút gọn.</p>
+
+        <!-- Form nhập liệu -->
+        <div class="space-y-4">
+            <div>
+                <label for="apiKey" class="block text-sm font-medium text-gray-300 mb-1">API Key của bạn</label>
+                <input type="text" id="apiKey" class="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="dán_api_key_của_bạn_vào_đây">
+            </div>
+            <div>
+                <label for="urlToShorten" class="block text-sm font-medium text-gray-300 mb-1">URL cần rút gọn</label>
+                <input type="text" id="urlToShorten" class="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="https://www.google.com">
+            </div>
+        </div>
+
+        <!-- Nút Get Key -->
+        <button id="getKeyBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md mt-6 transition duration-300 ease-in-out transform hover:scale-105">
+            Tạo Link (Get Key)
+        </button>
+
+        <!-- Khu vực hiển thị kết quả -->
+        <div id="resultContainer" class="mt-6 hidden">
+            <label class="block text-sm font-medium text-gray-300 mb-1">Link đã tạo:</label>
+            <div class="flex items-center space-x-2">
+                <input type="text" id="generatedLink" class="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-green-400" readonly>
+                <button id="copyBtn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-md transition duration-300">
+                    Sao chép
+                </button>
+            </div>
+        </div>
+        
+        <!-- Thông báo lỗi -->
+        <div id="errorContainer" class="mt-4 text-red-400 text-center"></div>
+    </div>
+
+    <script>
+        const getKeyBtn = document.getElementById('getKeyBtn');
+        const copyBtn = document.getElementById('copyBtn');
+        const apiKeyInput = document.getElementById('apiKey');
+        const urlToShortenInput = document.getElementById('urlToShorten');
+        const resultContainer = document.getElementById('resultContainer');
+        const generatedLinkInput = document.getElementById('generatedLink');
+        const errorContainer = document.getElementById('errorContainer');
+
+        // Hàm gọi API
+        async function generateLink() {
+            const apiKey = apiKeyInput.value.trim();
+            const urlToShorten = urlToShortenInput.value.trim();
+            
+            // Xóa thông báo lỗi và kết quả cũ
+            errorContainer.textContent = '';
+            resultContainer.classList.add('hidden');
+
+            // Kiểm tra đầu vào
+            if (!apiKey) {
+                errorContainer.textContent = 'Vui lòng nhập API Key của bạn.';
+                return;
+            }
+            if (!urlToShorten) {
+                errorContainer.textContent = 'Vui lòng nhập URL cần rút gọn.';
+                return;
+            }
+
+            // Hiển thị trạng thái đang tải
+            getKeyBtn.disabled = true;
+            getKeyBtn.textContent = 'Đang xử lý...';
+
+            try {
+                // Mã hóa URL để đảm bảo an toàn khi truyền qua API
+                const encodedUrl = encodeURIComponent(urlToShorten);
+                const apiUrl = `https://link4m.co/api-create?api=${apiKey}&url=${encodedUrl}&format=text`;
+                
+                // Gọi API bằng fetch
+                const response = await fetch(apiUrl);
+
+                if (!response.ok) {
+                    // Nếu API trả về lỗi
+                    throw new Error(`Lỗi từ API: ${response.statusText}`);
+                }
+                
+                const shortLink = await response.text();
+                
+                // Kiểm tra nội dung trả về
+                if (shortLink.toLowerCase().includes('error')) {
+                     throw new Error(shortLink);
+                }
+
+                // Hiển thị kết quả
+                generatedLinkInput.value = shortLink;
+                resultContainer.classList.remove('hidden');
+
+            } catch (error) {
+                // Xử lý lỗi
+                console.error('Lỗi khi gọi API:', error);
+                errorContainer.textContent = `Đã xảy ra lỗi: ${error.message}. Vui lòng kiểm tra lại API Key và URL.`;
+            } finally {
+                // Khôi phục lại trạng thái nút
+                getKeyBtn.disabled = false;
+                getKeyBtn.textContent = 'Tạo Link (Get Key)';
+            }
+        }
+
+        // Hàm sao chép
+        function copyToClipboard() {
+            generatedLinkInput.select();
+            // Hàm execCommand được dùng để tương thích rộng rãi hơn
+            document.execCommand('copy');
+
+            // Thay đổi văn bản nút để thông báo đã sao chép
+            copyBtn.textContent = 'Đã chép!';
+            setTimeout(() => {
+                copyBtn.textContent = 'Sao chép';
+            }, 2000); // Trở lại bình thường sau 2 giây
+        }
+        
+        // Gán sự kiện cho các nút
+        getKeyBtn.addEventListener('click', generateLink);
+        copyBtn.addEventListener('click', copyToClipboard);
+    </script>
+</body>
+</html>
