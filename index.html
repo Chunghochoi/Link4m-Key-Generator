@@ -19,13 +19,14 @@
 
     <div class="w-full max-w-md bg-gray-800 p-8 rounded-lg shadow-2xl">
         <h1 class="text-3xl font-bold text-center mb-2">Công cụ tạo link Link4m</h1>
-        <p class="text-center text-gray-400 mb-6">Nhập thông tin API và URL để tạo link rút gọn.</p>
+        <p class="text-center text-gray-400 mb-6">Nhập URL để tạo link rút gọn.</p>
 
         <!-- Form nhập liệu -->
         <div class="space-y-4">
-            <div>
+            <!-- Trường nhập API Key đã được ẩn đi -->
+            <div class="hidden">
                 <label for="apiKey" class="block text-sm font-medium text-gray-300 mb-1">API Key của bạn</label>
-                <input type="text" id="apiKey" class="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="dán_api_key_của_bạn_vào_đây">
+                <input type="text" id="apiKey" class="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
             </div>
             <div>
                 <label for="urlToShorten" class="block text-sm font-medium text-gray-300 mb-1">URL cần rút gọn</label>
@@ -56,24 +57,31 @@
     <script>
         const getKeyBtn = document.getElementById('getKeyBtn');
         const copyBtn = document.getElementById('copyBtn');
-        const apiKeyInput = document.getElementById('apiKey');
         const urlToShortenInput = document.getElementById('urlToShorten');
         const resultContainer = document.getElementById('resultContainer');
         const generatedLinkInput = document.getElementById('generatedLink');
         const errorContainer = document.getElementById('errorContainer');
 
+        // ================================================================
+        // THAY THẾ API KEY MẶC ĐỊNH CỦA BẠN VÀO DÒNG BÊN DƯỚI
+        // ================================================================
+        const DEFAULT_API_KEY = "68d65966f7554f1c2b695279";
+
+
         // Hàm gọi API
         async function generateLink() {
-            const apiKey = apiKeyInput.value.trim();
+            // Lấy API key từ hằng số đã định nghĩa ở trên
+            const apiKey = DEFAULT_API_KEY;
             const urlToShorten = urlToShortenInput.value.trim();
             
             errorContainer.textContent = '';
             resultContainer.classList.add('hidden');
 
-            if (!apiKey) {
-                errorContainer.textContent = 'Vui lòng nhập API Key của bạn.';
+            if (apiKey === "DÁN_API_KEY_CỦA_BẠN_VÀO_ĐÂY") {
+                errorContainer.textContent = 'Vui lòng thay thế API Key mặc định trong mã nguồn.';
                 return;
             }
+
             if (!urlToShorten) {
                 errorContainer.textContent = 'Vui lòng nhập URL cần rút gọn.';
                 return;
@@ -84,18 +92,15 @@
 
             try {
                 const encodedUrl = encodeURIComponent(urlToShorten);
-                // SỬA LỖI: Cập nhật đúng API endpoint theo tài liệu
                 const apiUrl = `https://link4m.co/api-shorten/v2?api=${apiKey}&url=${encodedUrl}`;
                 
                 const response = await fetch(apiUrl);
-                // SỬA LỖI: Xử lý phản hồi dạng JSON thay vì text
                 const data = await response.json();
 
                 if (!response.ok) {
                     throw new Error(data.message || `Lỗi HTTP: ${response.status}`);
                 }
                 
-                // SỬA LỖI: Kiểm tra trạng thái và lấy link từ "shortenedUrl"
                 if (data.status === 'success') {
                     generatedLinkInput.value = data.shortenedUrl;
                     resultContainer.classList.remove('hidden');
@@ -128,4 +133,3 @@
     </script>
 </body>
 </html>
-
