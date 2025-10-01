@@ -67,11 +67,9 @@
             const apiKey = apiKeyInput.value.trim();
             const urlToShorten = urlToShortenInput.value.trim();
             
-            // Xóa thông báo lỗi và kết quả cũ
             errorContainer.textContent = '';
             resultContainer.classList.add('hidden');
 
-            // Kiểm tra đầu vào
             if (!apiKey) {
                 errorContainer.textContent = 'Vui lòng nhập API Key của bạn.';
                 return;
@@ -81,40 +79,34 @@
                 return;
             }
 
-            // Hiển thị trạng thái đang tải
             getKeyBtn.disabled = true;
             getKeyBtn.textContent = 'Đang xử lý...';
 
             try {
-                // Mã hóa URL để đảm bảo an toàn khi truyền qua API
                 const encodedUrl = encodeURIComponent(urlToShorten);
-                const apiUrl = `https://link4m.co/api-create?api=${apiKey}&url=${encodedUrl}&format=text`;
+                // SỬA LỖI: Cập nhật đúng API endpoint theo tài liệu
+                const apiUrl = `https://link4m.co/api-shorten/v2?api=${apiKey}&url=${encodedUrl}`;
                 
-                // Gọi API bằng fetch
                 const response = await fetch(apiUrl);
+                // SỬA LỖI: Xử lý phản hồi dạng JSON thay vì text
+                const data = await response.json();
 
                 if (!response.ok) {
-                    // Nếu API trả về lỗi
-                    throw new Error(`Lỗi từ API: ${response.statusText}`);
+                    throw new Error(data.message || `Lỗi HTTP: ${response.status}`);
                 }
                 
-                const shortLink = await response.text();
-                
-                // Kiểm tra nội dung trả về
-                if (shortLink.toLowerCase().includes('error')) {
-                     throw new Error(shortLink);
+                // SỬA LỖI: Kiểm tra trạng thái và lấy link từ "shortenedUrl"
+                if (data.status === 'success') {
+                    generatedLinkInput.value = data.shortenedUrl;
+                    resultContainer.classList.remove('hidden');
+                } else {
+                    throw new Error(data.message || 'API trả về lỗi không xác định.');
                 }
-
-                // Hiển thị kết quả
-                generatedLinkInput.value = shortLink;
-                resultContainer.classList.remove('hidden');
 
             } catch (error) {
-                // Xử lý lỗi
                 console.error('Lỗi khi gọi API:', error);
                 errorContainer.textContent = `Đã xảy ra lỗi: ${error.message}. Vui lòng kiểm tra lại API Key và URL.`;
             } finally {
-                // Khôi phục lại trạng thái nút
                 getKeyBtn.disabled = false;
                 getKeyBtn.textContent = 'Tạo Link (Get Key)';
             }
@@ -123,19 +115,17 @@
         // Hàm sao chép
         function copyToClipboard() {
             generatedLinkInput.select();
-            // Hàm execCommand được dùng để tương thích rộng rãi hơn
             document.execCommand('copy');
 
-            // Thay đổi văn bản nút để thông báo đã sao chép
             copyBtn.textContent = 'Đã chép!';
             setTimeout(() => {
                 copyBtn.textContent = 'Sao chép';
-            }, 2000); // Trở lại bình thường sau 2 giây
+            }, 2000);
         }
         
-        // Gán sự kiện cho các nút
         getKeyBtn.addEventListener('click', generateLink);
         copyBtn.addEventListener('click', copyToClipboard);
     </script>
 </body>
 </html>
+
